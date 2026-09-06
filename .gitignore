@@ -1,0 +1,21 @@
+# Node
+node_modules/
+
+# Local tooling
+.claude/
+
+# Build output
+dist/
+frontend/dist/
+
+# Environment / secrets (backend/.env never committed)
+.env
+.env.local
+backend/.env
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

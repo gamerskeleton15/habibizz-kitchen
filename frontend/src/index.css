@@ -1,0 +1,137 @@
+/* Tailwind CSS imports */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles for Habibizz Kitchens */
+html {
+  scroll-behavior: smooth;
+  /* Disable iOS Safari's text-size adjust on rotation - keeps the
+     layout from jumping because the user-agent font size is in
+     the cascade and would override the base 16px. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* On iOS, tapping buttons/links briefly flashes a grey background
+     overlay. Disabling this makes the design feel snappier and stops
+     the flash from looking like a "press" the user has to wait for. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Work Sans', sans-serif;
+  background-color: #0D0D0D;
+  color: #FFFFFF;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Embers: two soft yellow "glow" radial gradients in opposite corners,
+     each breathing on its own loop. The two keyframes are offset in
+     duration (6s vs 7.5s) so the pulses never sync up — the page feels
+     alive but the rhythm stays irregular and organic. A static third
+     glow sits in the middle for baseline depth. The fixed attachment
+     keeps the embers pinned to the viewport instead of scrolling away. */
+  background-image:
+    radial-gradient(ellipse 60% 50% at 15% 10%, rgba(255, 212, 0, 0.20), transparent 65%),
+    radial-gradient(ellipse 50% 45% at 90% 95%, rgba(255, 226, 77, 0.14), transparent 65%),
+    radial-gradient(ellipse 40% 30% at 50% 60%, rgba(255, 212, 0, 0.04), transparent 70%);
+  background-attachment: fixed;
+  animation: emberTop 6s ease-in-out infinite,
+             emberBottom 7.5s ease-in-out infinite;
+}
+
+@keyframes emberTop {
+  /* The top-left ember brightens then dims, like a slow heartbeat. */
+  0%, 100% { background-color: #0D0D0D; filter: brightness(1); }
+  50%      { background-color: #1A1500; filter: brightness(1.08); }
+}
+
+@keyframes emberBottom {
+  /* Bottom-right ember runs at a different tempo so the two never
+     beat in sync. Offset by 1s via animation-delay below so the
+     first cycle isn't both at peak together. */
+  0%, 100% { background-color: #0D0D0D; filter: brightness(1); }
+  50%      { background-color: #141000; filter: brightness(1.06); }
+}
+
+/* Custom yellow focus ring for accessibility */
+*:focus-visible {
+  outline: 3px solid #FFD400;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Headings use Archivo Black */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Archivo Black', sans-serif;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  body {
+    /* The emberTop + emberBottom keyframes are already neutered by the
+       blanket rule above (animation-duration: 0.01ms), but we also
+       force the base color back to pure brand black and remove the
+       filter brightening so motion-sensitive users see a flat
+       dark background instead of a frozen mid-pulse frame. */
+    background-color: #0D0D0D !important;
+    filter: none !important;
+  }
+}
+
+/* Page transition - subtle fade-in on route change.
+   The animation itself is defined normally, but the
+   prefers-reduced-motion block above zeroes its duration
+   for users who opt out. */
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-fade {
+  animation: pageFadeIn 0.25s ease-out;
+}
+
+/* ---- Glassmorphism utility classes ----
+   Used on every card surface (menu items, modals, the chat card, the
+   order tracker, the active order card, etc.) to give the page depth.
+   - .glass: the default frosted card. Translucent white + blur + soft
+     inner border + drop shadow. Use on most card surfaces.
+   - .glass-strong: heavier opacity/blur for the largest surfaces
+     (modals, the chat card) where the background should read as a
+     distinct panel instead of disappearing.
+   - .glass-yellow: yellow-tinted glass for AI bubbles, active CTAs,
+     and warning banners. Reads as a soft glow without the full yellow
+     fill. */
+@layer components {
+  .glass {
+    background-color: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.5);
+  }
+  .glass-strong {
+    background-color: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 30px 80px -10px rgba(0, 0, 0, 0.6);
+  }
+  .glass-yellow {
+    background-color: rgba(255, 212, 0, 0.12);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(255, 212, 0, 0.3);
+  }
+}

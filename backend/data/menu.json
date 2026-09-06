@@ -1,0 +1,91 @@
+[
+  {
+    "id": 1,
+    "name": "Big Habibizz Burger",
+    "description": "Two beef patties, cheese, lettuce, tomato, onion, pickles, and special sauce on a sesame seed bun.",
+    "price": 8.99,
+    "category": "Burgers",
+    "tags": [
+      "signature"
+    ],
+    "imageUrl": "C:\\Users\\Mr. John Wick\\Desktop\\habibizz kitchen/logo.png"
+  },
+  {
+    "id": 2,
+    "name": "Chicken Royale Burger",
+    "description": "Crispy chicken fillet, cheese, lettuce, mayo, and habibizz spice on a toasted bun.",
+    "price": 7.99,
+    "category": "Burgers",
+    "tags": [
+      "spicy"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Veggie Deluxe Burger",
+    "description": "Grilled vegetable patty, cheese, lettuce, tomato, onion, and herb mayo on a whole wheat bun.",
+    "price": 7.49,
+    "category": "Burgers",
+    "tags": [
+      "vegetarian"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Crispy Fries",
+    "description": "Golden-brown fries, lightly salted and served hot.",
+    "price": 2.99,
+    "category": "Sides",
+    "tags": []
+  },
+  {
+    "id": 5,
+    "name": "Loaded Fries",
+    "description": "Crispy fries topped with cheese, bacon bits, jalapeños, and habibizz sauce.",
+    "price": 4.49,
+    "category": "Sides",
+    "tags": [
+      "spicy"
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Onion Rings",
+    "description": "Beer-battered onion rings, crispy and golden.",
+    "price": 3.49,
+    "category": "Sides",
+    "tags": []
+  },
+  {
+    "id": 7,
+    "name": "Habibizz Cola",
+    "description": "Classic cola drink, served ice-cold.",
+    "price": 1.99,
+    "category": "Drinks",
+    "tags": []
+  },
+  {
+    "id": 8,
+    "name": "Mango Lassi",
+    "description": "Refreshing yogurt-based drink with mango pulp.",
+    "price": 2.49,
+    "category": "Drinks",
+    "tags": []
+  },
+  {
+    "id": 9,
+    "name": "Chocolate Fudge Cake",
+    "description": "Rich chocolate cake with fudge frosting and chocolate shavings.",
+    "price": 4.99,
+    "category": "Desserts",
+    "tags": []
+  },
+  {
+    "id": 10,
+    "name": "Apple Pie",
+    "description": "Warm apple pie with a scoop of vanilla ice cream.",
+    "price": 3.99,
+    "category": "Desserts",
+    "tags": []
+  }
+]

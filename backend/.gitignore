@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Environment (contains secrets - never commit)
+.env
+
+# Generated runtime data (customer data, rebuilt by the server)
+data/sessions.json
+data/orders.json
+data/users.json
+data/support.json
