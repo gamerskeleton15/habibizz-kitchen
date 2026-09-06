@@ -101,10 +101,33 @@ app.use('/api/admin', authRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/auth', oauthRoutes);
 
-// Basic health check
-app.get('/', (req, res) => {
-  res.json({ message: 'Habibizz Kitchens API is running' });
+// Basic health check (used by the platform to confirm the app is up).
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
+
+// Serve the built frontend (single-service production deploys).
+// The Vite build outputs to frontend/dist; when that folder exists we
+// serve it here so ONE Express server handles both the API and the site.
+// Same origin means OAuth cookies and the relative /api fetches all just
+// work - no CORS juggling. In development the Vite dev server on 5173
+// proxies /api + /auth to this server instead, so dist is usually absent
+// and we fall back to the plain JSON root below.
+const distPath = path.join(__dirname, '..', 'frontend', 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+
+  // SPA fallback: any non-API, non-auth GET returns index.html so the
+  // React Router routes (/menu, /admin, ...) work on direct refresh.
+  app.get(/^\/(?!api\/|auth\/).*/, (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else {
+  // Development fallback - a plain root so you can tell the API is alive.
+  app.get('/', (req, res) => {
+    res.json({ message: 'Habibizz Kitchens API is running' });
+  });
+}
 
 // Start server
 app.listen(PORT, () => {
