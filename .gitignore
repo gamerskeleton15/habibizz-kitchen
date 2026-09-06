@@ -12,6 +12,7 @@ frontend/dist/
 .env
 .env.local
 backend/.env
+backend/.env.txt
 
 # Logs
 *.log

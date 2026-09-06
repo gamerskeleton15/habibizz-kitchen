@@ -1,0 +1,10 @@
+{
+  "name": "habibizz-kitchens",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Habibizz Kitchens - fast food ordering site (root package for Railway single-service deploy)",
+  "scripts": {
+    "build": "npm --prefix backend ci && npm --prefix backend run build",
+    "start": "npm --prefix backend start"
+  }
+}
