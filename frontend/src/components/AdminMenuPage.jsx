@@ -11,6 +11,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import AdminLogin from './AdminLogin'
+import api from '../apiClient'
 
 const TOKEN_KEY = 'habibizz-admin-token'
 
@@ -51,7 +52,7 @@ export default function AdminMenuPage() {
 
   const loadMenu = async () => {
     try {
-      const res = await fetch('/api/menu')
+      const res = await fetch(api('/api/menu'))
       if (!res.ok) throw new Error('Failed to load menu')
       setItems(await res.json())
       setLoading(false)
@@ -141,7 +142,7 @@ export default function AdminMenuPage() {
   const handleDelete = async (item) => {
     if (!window.confirm(`Delete "${item.name}"? This can't be undone.`)) return
     try {
-      const res = await fetch(`/api/menu/${item.id}`, {
+      const res = await fetch(api(`/api/menu/${item.id}`), {
         method: 'DELETE',
         headers: { 'x-admin-token': token },
       })

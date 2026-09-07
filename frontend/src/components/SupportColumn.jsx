@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import api from '../apiClient'
 
 const TOKEN_KEY = 'habibizz-admin-token'
 const POLL_INTERVAL_MS = 5000
@@ -26,7 +27,7 @@ export default function SupportColumn() {
 
     const fetchThreads = async () => {
       try {
-        const res = await fetch('/api/support/threads', {
+        const res = await fetch(api('/api/support/threads'), {
           headers: { 'x-admin-token': token },
         })
         if (!res.ok) throw new Error('Failed to load support threads')

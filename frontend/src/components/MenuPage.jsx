@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import MenuCard from './MenuCard'
+import api from '../apiClient'
 
 const CATEGORIES = ['Burgers', 'Sides', 'Drinks', 'Desserts']
 
@@ -16,7 +17,7 @@ export default function MenuPage({ onAddToCart }) {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const response = await fetch('/api/menu')
+        const response = await fetch(api('/api/menu'))
         if (!response.ok) throw new Error('Failed to load menu')
         const data = await response.json()
         setMenuItems(data)

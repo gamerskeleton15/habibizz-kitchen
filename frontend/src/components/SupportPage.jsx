@@ -4,6 +4,7 @@
 // survives refreshes. Polls the backend every 5s to receive admin replies.
 
 import { useState, useEffect, useRef } from 'react'
+import api from '../apiClient'
 
 const STORAGE_KEY = 'habibizz-support-thread'
 const POLL_INTERVAL_MS = 5000
@@ -79,7 +80,7 @@ export default function SupportPage() {
 
     const tick = async () => {
       try {
-        const res = await fetch(`/api/support/threads/${threadId}`)
+        const res = await fetch(api(`/api/support/threads/${threadId}`))
         if (cancelled) return
         if (res.status === 404) {
           // Thread doesn't exist yet (no message sent, or it was cleared).
@@ -135,14 +136,14 @@ export default function SupportPage() {
         // threadId so the server stores the conversation under the ID we
         // already saved in localStorage. Otherwise the next poll would
         // 404 on a different ID and wipe the message we just sent.
-        res = await fetch('/api/support/threads', {
+        res = await fetch(api('/api/support/threads'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: text, id: threadId }),
         })
       } else {
         // Subsequent message - append to the existing thread.
-        res = await fetch(`/api/support/threads/${threadId}/messages`, {
+        res = await fetch(api(`/api/support/threads/${threadId}/messages`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text }),

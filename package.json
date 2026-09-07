@@ -2,9 +2,8 @@
   "name": "habibizz-kitchens",
   "private": true,
   "version": "1.0.0",
-  "description": "Habibizz Kitchens - fast food ordering site (root package for Railway single-service deploy)",
+  "description": "Habibizz Kitchens - root package (frontend + backend are deployed separately)",
   "scripts": {
-    "build": "npm --prefix backend ci && npm --prefix backend run build",
-    "start": "npm --prefix backend start"
+    "build": "echo 'No root build; deploy backend/ and frontend/ independently to Vercel.'"
   }
 }

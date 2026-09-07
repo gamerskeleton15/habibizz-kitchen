@@ -2,11 +2,11 @@
   "name": "habibizz-kitchens-backend",
   "version": "1.0.0",
   "description": "Backend for Habibizz Kitchens fast food restaurant website",
-  "main": "server.js",
+  "main": "app.js",
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "build": "cd ../frontend && npm ci && npm run build",
+    "build": "echo 'No backend build step needed; Vercel bundles the serverless function directly.'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -19,6 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@upstash/redis": "^1.38.4",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "express-session": "^1.19.0",

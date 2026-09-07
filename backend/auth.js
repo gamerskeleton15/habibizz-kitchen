@@ -1,111 +1,62 @@
 // Auth helpers for the admin area AND customer OAuth login.
-// - Reads the admin password from data/config.json
-// - Maintains an in-memory map of session tokens (valid for 7 days)
-// - Exposes middleware that checks a session token on protected routes
-// - Configures Passport with Google and GitHub OAuth strategies for customers
+// - Reads the admin password from ADMIN_PASSWORD (env var on Vercel) or
+//   falls back to backend/data/config.json (local dev). Production
+//   requires the env var so the secret isn't bundled in the deploy.
+// - Admin sessions are stored in Upstash Redis (see lib/store.js), with
+//   a 7-day rolling TTL — survives Vercel cold starts.
+// - Configures Passport with Google and GitHub OAuth strategies for
+//   customer login. The strategies are only registered when both the
+//   client ID and secret are present, same as before.
 //
-// In a real production app you'd use JWT or sessions stored in a real DB.
-// This is deliberately simple for a beginner project.
+// Vercel note: in serverless, each invocation can be on a different
+// cold instance. There is no shared in-memory state between requests
+// anymore, so everything durable (sessions, users) goes through Redis.
 
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const GitHubStrategy = require('passport-github2').Strategy;
+const store = require('./lib/store');
 
-const configPath = path.join(__dirname, 'data', 'config.json');
-
-// Persistent session store: backed by data/sessions.json so restarts don't
-// log everyone out. In-memory cache for fast lookups, file for durability.
-const sessionsFilePath = path.join(__dirname, 'data', 'sessions.json');
-
-// Users data store: backend/data/users.json
-// Each user: { id, name, email, avatar, provider, createdAt }
-const usersFilePath = path.join(__dirname, 'data', 'users.json');
-
-// Load existing sessions from disk on startup.
-const loadSessions = () => {
-  try {
-    if (!fs.existsSync(sessionsFilePath)) return new Map();
-    const data = fs.readFileSync(sessionsFilePath, 'utf8');
-    const parsed = JSON.parse(data);
-    return new Map(Object.entries(parsed));
-  } catch (e) {
-    console.error('Could not load sessions.json, starting fresh:', e.message);
-    return new Map();
-  }
-};
-
-// Write the current in-memory sessions back to disk.
-const saveSessions = () => {
-  try {
-    const obj = Object.fromEntries(sessions);
-    fs.writeFileSync(sessionsFilePath, JSON.stringify(obj, null, 2));
-  } catch (e) {
-    console.error('Could not save sessions.json:', e.message);
-  }
-};
-
-const sessions = loadSessions();
-
-// How long a session is valid (7 days, in milliseconds)
-const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
-// Read the admin password from config.json
+// Admin password lookup. On Vercel we expect ADMIN_PASSWORD as an env
+// var; locally, we still read backend/data/config.json for convenience.
 const getAdminPassword = () => {
+  if (process.env.ADMIN_PASSWORD) return process.env.ADMIN_PASSWORD;
   try {
+    const configPath = path.join(__dirname, 'data', 'config.json');
     const data = fs.readFileSync(configPath, 'utf8');
-    const config = JSON.parse(data);
-    return config.adminPassword;
+    return JSON.parse(data).adminPassword;
   } catch (e) {
     console.error('Could not read config.json:', e.message);
     return null;
   }
 };
 
-// Check a password against the configured one. Returns true/false.
+// Constant-time comparison to prevent timing attacks.
 const checkPassword = (input) => {
   const expected = getAdminPassword();
   if (!expected) return false;
-  // Constant-time comparison to prevent timing attacks
   const a = Buffer.from(input || '');
   const b = Buffer.from(expected);
   if (a.length !== b.length) return false;
   return crypto.timingSafeEqual(a, b);
 };
 
-// Generate a new random session token
-const createSession = () => {
+// ---- Admin sessions (Redis-backed) ----
+
+const createSession = async () => {
   const token = crypto.randomBytes(32).toString('hex');
-  sessions.set(token, { createdAt: Date.now() });
-  saveSessions();
+  await store.createSession(token);
   return token;
 };
 
-// Check if a token is still valid (and prune if expired)
-const isValidToken = (token) => {
-  if (!token || !sessions.has(token)) return false;
-  const { createdAt } = sessions.get(token);
-  if (Date.now() - createdAt > SESSION_TTL_MS) {
-    sessions.delete(token);
-    saveSessions();
-    return false;
-  }
-  return true;
-};
-
-// Delete a session (logout)
-const deleteSession = (token) => {
-  sessions.delete(token);
-  saveSessions();
-};
-
-// Express middleware that requires a valid session token.
+// Express middleware that requires a valid admin session token.
 // Reads the token from the Authorization header (Bearer ...) or from
 // a `x-admin-token` header (simpler for fetch() from the frontend).
-const requireAuth = (req, res, next) => {
+const requireAuth = async (req, res, next) => {
   const auth = req.headers.authorization || '';
   let token = null;
   if (auth.startsWith('Bearer ')) {
@@ -113,54 +64,25 @@ const requireAuth = (req, res, next) => {
   } else if (req.headers['x-admin-token']) {
     token = req.headers['x-admin-token'];
   }
-  if (!isValidToken(token)) {
+  if (!(await store.isValidToken(token))) {
     return res.status(401).json({ error: 'Unauthorized. Please log in.' });
   }
-  // Attach the token to the request for downstream handlers
   req.adminToken = token;
   next();
 };
 
+const deleteSession = (token) => store.deleteSession(token);
+
 // ===== Customer OAuth (Google + GitHub) =====
 
-// Load users from disk. Returns [] if the file is missing.
-const loadUsers = () => {
-  try {
-    if (!fs.existsSync(usersFilePath)) return [];
-    const data = fs.readFileSync(usersFilePath, 'utf8');
-    return JSON.parse(data);
-  } catch (e) {
-    console.error('Could not load users.json:', e.message);
-    return [];
-  }
-};
-
-// Save users to disk.
-const saveUsers = (users) => {
-  try {
-    fs.mkdirSync(path.dirname(usersFilePath), { recursive: true });
-    fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2));
-    return true;
-  } catch (e) {
-    console.error('Could not save users.json:', e.message);
-    return false;
-  }
-};
-
 // Find or create a user from an OAuth profile. `provider` is 'google' or
-// 'github'. `profile` is the normalized object Passport gives us. Returns
-// the full user record.
-const findOrCreateUser = (provider, profile) => {
-  const users = loadUsers();
-  // The provider gives us a stable ID; we prefix it so a Google user and
-  // a GitHub user with the same numeric ID never collide.
+// 'github'. `profile` is the normalized object Passport gives us.
+const findOrCreateUser = async (provider, profile) => {
+  const users = await store.readUsers();
   const providerId = `${provider}:${profile.id}`;
   let user = users.find((u) => u.providerId === providerId);
 
   if (!user) {
-    // Pull the best-available name/email/avatar out of the profile.
-    // Google: profile.displayName, profile.emails[0].value, profile.photos[0].value
-    // GitHub: profile.username / profile.displayName, profile.emails[0].value, profile.photos[0].value
     const email =
       (profile.emails && profile.emails[0] && profile.emails[0].value) || null;
     const avatar =
@@ -178,38 +100,32 @@ const findOrCreateUser = (provider, profile) => {
       createdAt: new Date().toISOString(),
     };
     users.push(user);
-    saveUsers(users);
+    await store.writeUsers(users);
   }
   return user;
 };
 
-// Configure Passport strategies. We only register a strategy if BOTH the
-// client ID and secret are present, so the server still starts cleanly
-// when the developer hasn't filled in .env yet. The routes file checks
-// `isOAuthConfigured('google' | 'github')` before mounting the buttons.
+// Where this backend lives. Used to build the OAuth callback URL.
+// PUBLIC_URL is the Vercel domain (e.g. https://habibizz-api.vercel.app).
+// For local dev, default to http://localhost:4000 — but on Vercel you
+// MUST set PUBLIC_URL because there's no other reliable signal.
+const PUBLIC_URL = (process.env.PUBLIC_URL || 'http://localhost:4000').replace(/\/$/, '');
 
 // ---- Google ----
 const googleId = (process.env.GOOGLE_CLIENT_ID || '').trim();
 const googleSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
-// Use the public URL of the deployed app so the redirect_uri Google sees
-// is https (e.g. https://web-production-49dd4.up.railway.app/auth/google/callback)
-// regardless of what Express thinks the incoming protocol is. Falls back
-// to the relative path for local dev.
-const GOOGLE_CALLBACK_URL = (process.env.PUBLIC_URL || 'https://habibizz-kitchen-production.up.railway.app') + '/auth/google/callback';
-const GITHUB_CALLBACK_URL = (process.env.PUBLIC_URL || 'https://habibizz-kitchen-production.up.railway.app') + '/auth/github/callback';
-
 if (googleId && googleSecret) {
   passport.use(
     new GoogleStrategy(
       {
         clientID: googleId,
         clientSecret: googleSecret,
-        callbackURL: GOOGLE_CALLBACK_URL,
-        proxy: true
+        callbackURL: `${PUBLIC_URL}/auth/google/callback`,
+        proxy: true,
       },
-      (accessToken, refreshToken, profile, done) => {
+      async (accessToken, refreshToken, profile, done) => {
         try {
-          const user = findOrCreateUser('google', profile);
+          const user = await findOrCreateUser('google', profile);
           return done(null, user);
         } catch (e) {
           return done(e, null);
@@ -228,13 +144,13 @@ if (githubId && githubSecret) {
       {
         clientID: githubId,
         clientSecret: githubSecret,
-        callbackURL: GITHUB_CALLBACK_URL,
+        callbackURL: `${PUBLIC_URL}/auth/github/callback`,
         scope: ['user:email'],
-        proxy: true
+        proxy: true,
       },
-      (accessToken, refreshToken, profile, done) => {
+      async (accessToken, refreshToken, profile, done) => {
         try {
-          const user = findOrCreateUser('github', profile);
+          const user = await findOrCreateUser('github', profile);
           return done(null, user);
         } catch (e) {
           return done(e, null);
@@ -244,40 +160,37 @@ if (githubId && githubSecret) {
   );
 }
 
-// Tell Passport how to serialize/deserialize a user into the session cookie.
-// We only need the user ID; the full record is reloaded on each request.
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-passport.deserializeUser((id, done) => {
-  const users = loadUsers();
-  const user = users.find((u) => u.id === id);
-  if (!user) return done(null, false);
-  done(null, user);
+// Passport session: we still use the default express-session store,
+// but express-session itself now talks to Redis (configured in api/index.js).
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser(async (id, done) => {
+  try {
+    const users = await store.readUsers();
+    const user = users.find((u) => u.id === id);
+    if (!user) return done(null, false);
+    done(null, user);
+  } catch (e) {
+    done(e, null);
+  }
 });
 
-// Public helpers used by routes/auth.js to gate the buttons.
 const isOAuthConfigured = (provider) => {
   if (provider === 'google') return !!(googleId && googleSecret);
   if (provider === 'github') return !!(githubId && githubSecret);
   return false;
 };
 
-// Find a user by id (for /auth/me to rehydrate the session user on each
-// request). Returns null if the user no longer exists.
-const getUserById = (id) => {
+const getUserById = async (id) => {
   if (!id) return null;
-  const users = loadUsers();
+  const users = await store.readUsers();
   return users.find((u) => u.id === id) || null;
 };
 
 module.exports = {
   checkPassword,
   createSession,
-  isValidToken,
-  deleteSession,
   requireAuth,
-  // OAuth exports
+  deleteSession,
   passport,
   isOAuthConfigured,
   getUserById,

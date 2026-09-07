@@ -18,7 +18,7 @@ export default function Home() {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const res = await fetch('/api/menu')
+        const res = await fetch(api('/api/menu'))
         if (!res.ok) throw new Error('Failed to load menu')
         const all = await res.json()
         // Preserve the order of FEATURED_IDS

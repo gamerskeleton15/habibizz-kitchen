@@ -7,6 +7,7 @@
 import { useState } from 'react'
 import { Lock } from 'lucide-react'
 import SmokeyBackground from './SmokeyBackground'
+import api from '../apiClient'
 
 export default function AdminLogin({ onLogin }) {
   const [password, setPassword] = useState('')
@@ -18,7 +19,7 @@ export default function AdminLogin({ onLogin }) {
     setError(null)
     setLoading(true)
     try {
-      const res = await fetch('/api/admin/login', {
+      const res = await fetch(api('/api/admin/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),

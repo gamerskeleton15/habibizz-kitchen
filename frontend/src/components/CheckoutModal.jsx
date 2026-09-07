@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '../auth/AuthProvider'
+import api from '../apiClient'
 
 export default function CheckoutModal({ isOpen, onClose, cartItems, onOrderComplete }) {
   const { user } = useAuth()
@@ -79,7 +80,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, onOrderCompl
     }))
 
     try {
-      const response = await fetch('/api/orders', {
+      const response = await fetch(api('/api/orders'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

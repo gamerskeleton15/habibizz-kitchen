@@ -15,9 +15,8 @@
 // On any Gemini API error (no key, rate limit, network) the route catches
 // the typed error and falls back to FALLBACK_REPLY + escalation.
 
-const fs = require('fs');
-const path = require('path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const store = require('./store');
 
 // ---- Configuration ----
 
@@ -139,24 +138,22 @@ const caseInsensitiveContains = (text, needle) =>
 
 const matchedAny = (text, list) => list.some((kw) => caseInsensitiveContains(text, kw));
 
-// Read the menu once at module load. The system prompt is rebuilt only
-// when this file is required, so menu changes need a server restart —
-// which is fine for a beginner project.
-const loadMenu = () => {
+// Read the menu from Redis on every call so the AI's menu knowledge
+// matches whatever the admin has just edited — no restart needed.
+const loadMenu = async () => {
   try {
-    const menuPath = path.join(__dirname, '..', 'data', 'menu.json');
-    const items = JSON.parse(fs.readFileSync(menuPath, 'utf8'));
+    const items = await store.readMenu();
     return items.map(
       (it) => `- ${it.name} (${it.category}) — $${Number(it.price).toFixed(2)}: ${it.description}`
     );
   } catch (e) {
-    console.error('[aiSupport] Could not read menu.json:', e.message);
+    console.error('[aiSupport] Could not read menu:', e.message);
     return ['(menu unavailable)'];
   }
 };
 
-const buildSystemInstruction = () => {
-  const menuLines = loadMenu().join('\n');
+const buildSystemInstruction = async () => {
+  const menuLines = (await loadMenu()).join('\n');
   return `You are the Habibizz Assistant for ${BRAND.name}, a fast-casual restaurant. Your job is to answer customer questions quickly and warmly, then hand off to a real human when needed.
 
 # What you know
@@ -197,7 +194,7 @@ Your JSON response: {"text": "I'm really sorry to hear that — that's not the e
 // convenience, since Google's docs use both names interchangeably.
 
 let model = null;
-const getModel = () => {
+const getModel = async () => {
   if (model) return model;
   const key = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
   if (!key) return null;
@@ -205,9 +202,14 @@ const getModel = () => {
   // responseMimeType: 'application/json' tells Gemini to emit a JSON
   // object directly, which makes the "JSON only" contract trivial to
   // enforce — we don't have to parse the prose, just JSON.parse the text.
+  // buildSystemInstruction() is async because it reads the menu from
+  // Redis. We memoize the model (and therefore the system instruction)
+  // for the lifetime of this cold instance — the menu rarely changes
+  // mid-session and re-reading on every request would add a Redis
+  // round-trip to every AI call.
   model = client.getGenerativeModel({
     model: MODEL,
-    systemInstruction: buildSystemInstruction(),
+    systemInstruction: await buildSystemInstruction(),
     generationConfig: {
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       responseMimeType: 'application/json',
@@ -221,7 +223,7 @@ const getModel = () => {
 // Throws if GEMINI_API_KEY is missing or the API call fails. Caller
 // should catch and fall back to FALLBACK_REPLY + escalation.
 async function generateSupportReply(thread) {
-  const gemini = getModel();
+  const gemini = await getModel();
   if (!gemini) {
     const err = new Error('GEMINI_API_KEY not set');
     err.code = 'AI_OFFLINE';

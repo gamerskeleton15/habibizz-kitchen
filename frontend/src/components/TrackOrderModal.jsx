@@ -3,6 +3,7 @@
 // so the customer can keep it open and watch their order move through stages.
 
 import { useState, useEffect } from 'react'
+import api from '../apiClient'
 
 // Friendly status display (matches OrderTracker.jsx for visual consistency)
 const STATUS_DISPLAY = {
@@ -82,7 +83,7 @@ export default function TrackOrderModal({ isOpen, onClose }) {
     if (!autoRefresh || !order) return
     const tick = async () => {
       try {
-        const res = await fetch(`/api/orders/track/${order.orderNumber}`)
+        const res = await fetch(api(`/api/orders/track/${order.orderNumber}`))
         if (res.ok) {
           const fresh = await res.json()
           setOrder(fresh)
@@ -112,7 +113,7 @@ export default function TrackOrderModal({ isOpen, onClose }) {
     setLoading(true)
     const formatted = formatOrderNumber(orderNumber)
     try {
-      const res = await fetch(`/api/orders/track/${formatted}`)
+      const res = await fetch(api(`/api/orders/track/${formatted}`))
       if (res.status === 404) {
         setError(`No order found with number ${formatted}. Double-check it.`)
         setLoading(false)
@@ -133,7 +134,7 @@ export default function TrackOrderModal({ isOpen, onClose }) {
     if (!order) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/orders/track/${order.orderNumber}`)
+      const res = await fetch(api(`/api/orders/track/${order.orderNumber}`))
       if (res.ok) {
         const data = await res.json()
         setOrder(data)

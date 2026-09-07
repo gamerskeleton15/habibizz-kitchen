@@ -2,41 +2,32 @@
 // - POST /api/admin/login   -> accepts { password }, returns a session token
 // - POST /api/admin/logout  -> invalidates the given session token
 //
-// Session tokens are managed by the auth module (in-memory Map, 7-day TTL).
-// In a real production app you'd store sessions in a real DB or use JWTs.
+// On Vercel, sessions are stored in Upstash Redis with a 7-day rolling
+// TTL (see backend/auth.js + backend/lib/store.js).
 
 const express = require('express');
 const router = express.Router();
 const { checkPassword, createSession, deleteSession } = require('../auth');
 
-// POST /api/admin/login
-// Body: { password: string }
-// On success: { token: string, expiresInDays: number }
-// On wrong password: 401
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { password } = req.body || {};
-
   if (typeof password !== 'string' || password.length === 0) {
     return res.status(400).json({ error: 'Password is required' });
   }
-
   if (!checkPassword(password)) {
     return res.status(401).json({ error: 'Incorrect password' });
   }
 
-  const token = createSession();
-  res.json({
-    token,
-    expiresInDays: 7,
-    message: 'Logged in',
-  });
+  try {
+    const token = await createSession();
+    res.json({ token, expiresInDays: 7, message: 'Logged in' });
+  } catch (e) {
+    console.error('createSession failed:', e);
+    res.status(500).json({ error: 'Failed to create session' });
+  }
 });
 
-// POST /api/admin/logout
-// Body: { token: string }  (or read from header, same as the middleware does)
-// Invalidates the session so the token can no longer be used.
 router.post('/logout', (req, res) => {
-  // Accept the token from the body OR from the same headers requireAuth reads
   const auth = req.headers.authorization || '';
   let token = null;
   if (auth.startsWith('Bearer ')) {
@@ -46,12 +37,7 @@ router.post('/logout', (req, res) => {
   } else if (req.body && req.body.token) {
     token = req.body.token;
   }
-
-  if (token) {
-    deleteSession(token);
-  }
-
-  // Always succeed - logout is idempotent (no harm if token was already gone)
+  if (token) deleteSession(token);
   res.json({ message: 'Logged out' });
 });
 

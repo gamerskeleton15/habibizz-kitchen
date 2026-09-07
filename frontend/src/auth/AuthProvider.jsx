@@ -13,6 +13,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import api from '../apiClient'
 
 const AuthContext = createContext({
   user: null,
@@ -50,7 +51,7 @@ export function AuthProvider({ children }) {
     try {
       // credentials: 'include' is required so the session cookie is sent
       // to the backend. Without it, /auth/me always returns { user: null }.
-      const res = await fetch('/auth/me', {
+      const res = await fetch(api('/auth/me'), {
         credentials: 'include',
       })
       if (!res.ok) {
@@ -90,14 +91,14 @@ export function AuthProvider({ children }) {
   // a session cookie set. We do a full navigation (not fetch) because
   // we need the browser to follow the cross-origin redirects.
   const loginWith = useCallback((provider) => {
-    window.location.href = `/auth/${provider}`
+    window.location.href = api(`/auth/${provider}`)
   }, [])
 
   // Clear the session on the backend, then drop local state. The backend
   // also destroys the session cookie so the next /auth/me returns null.
   const logout = useCallback(async () => {
     try {
-      await fetch('/auth/logout', {
+      await fetch(api('/auth/logout'), {
         method: 'POST',
         credentials: 'include',
       })

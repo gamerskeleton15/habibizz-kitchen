@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import api from '../apiClient'
 
 // Statuses that mean "still in progress" - shown in the Active section.
 const ACTIVE_STATUSES = ['new', 'preparing', 'ready']
@@ -83,7 +84,7 @@ export default function OrdersPage({ onReorder }) {
 
     const fetchOne = async (id) => {
       try {
-        const res = await fetch(`/api/orders/${id}`)
+        const res = await fetch(api(`/api/orders/${id}`))
         if (res.status === 404) return { id, missing: true }
         if (!res.ok) return null
         return await res.json()

@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import AdminLogin from './AdminLogin'
+import api from '../apiClient'
 
 const TOKEN_KEY = 'habibizz-admin-token'
 const POLL_INTERVAL_MS = 5000
@@ -50,7 +51,7 @@ export default function AdminSupportPage() {
 
     const fetchThreads = async () => {
       try {
-        const res = await fetch('/api/support/threads', {
+        const res = await fetch(api('/api/support/threads'), {
           headers: { 'x-admin-token': token },
         })
         if (res.status === 401) {
@@ -88,7 +89,7 @@ export default function AdminSupportPage() {
 
     const fetchOne = async () => {
       try {
-        const res = await fetch(`/api/support/threads/${selectedId}`, {
+        const res = await fetch(api(`/api/support/threads/${selectedId}`), {
           headers: { 'x-admin-token': token },
         })
         if (res.status === 401) {
@@ -101,7 +102,7 @@ export default function AdminSupportPage() {
         setSelectedThread(data.thread)
         setLoadingThread(false)
         // Mark as read on the server so the unread badge clears.
-        fetch(`/api/support/threads/${selectedId}/read`, {
+        fetch(api(`/api/support/threads/${selectedId}/read`), {
           method: 'POST',
           headers: { 'x-admin-token': token },
         }).catch(() => {})
@@ -129,7 +130,7 @@ export default function AdminSupportPage() {
   const handleLogout = async () => {
     try {
       if (token) {
-        await fetch('/api/admin/logout', {
+        await fetch(api('/api/admin/logout'), {
           method: 'POST',
           headers: { 'x-admin-token': token },
         })
@@ -151,7 +152,7 @@ export default function AdminSupportPage() {
   const handleReply = async (text) => {
     if (!token || !selectedId) return
     try {
-      const res = await fetch(`/api/support/threads/${selectedId}/reply`, {
+      const res = await fetch(api(`/api/support/threads/${selectedId}/reply`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -180,7 +181,7 @@ export default function AdminSupportPage() {
   const handleStatus = async (newStatus) => {
     if (!token || !selectedId) return
     try {
-      const res = await fetch(`/api/support/threads/${selectedId}/status`, {
+      const res = await fetch(api(`/api/support/threads/${selectedId}/status`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

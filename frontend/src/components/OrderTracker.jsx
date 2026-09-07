@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import api from '../apiClient'
 
 // Friendly status text + glass-pill color for the customer-facing banner
 const STATUS_DISPLAY = {
@@ -78,7 +79,7 @@ export default function OrderTracker() {
 
     const fetchStatus = async (orderId) => {
       try {
-        const res = await fetch(`/api/orders/${orderId}`)
+        const res = await fetch(api(`/api/orders/${orderId}`))
         if (!res.ok) return null
         return await res.json()
       } catch {
