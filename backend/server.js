@@ -47,6 +47,9 @@ loadEnv();
 const { passport } = require('./auth');
 
 const app = express();
+// Trust Railway proxy so we know we're behind HTTPS
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 4000;
 
 // CORS - allow the Vite dev server (port 5173) to send cookies.
