@@ -198,6 +198,7 @@ if (googleId && googleSecret) {
         clientID: googleId,
         clientSecret: googleSecret,
         callbackURL: '/auth/google/callback',
+        proxy: true
       },
       (accessToken, refreshToken, profile, done) => {
         try {
@@ -222,6 +223,7 @@ if (githubId && githubSecret) {
         clientSecret: githubSecret,
         callbackURL: '/auth/github/callback',
         scope: ['user:email'],
+        proxy: true
       },
       (accessToken, refreshToken, profile, done) => {
         try {
