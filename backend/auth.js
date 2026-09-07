@@ -195,8 +195,8 @@ const googleSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
 // is https (e.g. https://web-production-49dd4.up.railway.app/auth/google/callback)
 // regardless of what Express thinks the incoming protocol is. Falls back
 // to the relative path for local dev.
-const GOOGLE_CALLBACK_URL = (process.env.PUBLIC_URL || 'https://web-production-49dd4.up.railway.app') + '/auth/google/callback';
-const GITHUB_CALLBACK_URL = (process.env.PUBLIC_URL || 'https://web-production-49dd4.up.railway.app') + '/auth/github/callback';
+const GOOGLE_CALLBACK_URL = (process.env.PUBLIC_URL || 'https://habibizz-kitchen-production.up.railway.app') + '/auth/google/callback';
+const GITHUB_CALLBACK_URL = (process.env.PUBLIC_URL || 'https://habibizz-kitchen-production.up.railway.app') + '/auth/github/callback';
 
 if (googleId && googleSecret) {
   passport.use(
