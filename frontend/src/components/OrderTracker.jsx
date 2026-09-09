@@ -79,7 +79,7 @@ export default function OrderTracker() {
 
     const fetchStatus = async (orderId) => {
       try {
-        const res = await fetch(api(`/api/orders/${orderId}`))
+        const res = await api(`/api/orders/${orderId}`)
         if (!res.ok) return null
         return await res.json()
       } catch {

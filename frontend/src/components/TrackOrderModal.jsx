@@ -83,7 +83,7 @@ export default function TrackOrderModal({ isOpen, onClose }) {
     if (!autoRefresh || !order) return
     const tick = async () => {
       try {
-        const res = await fetch(api(`/api/orders/track/${order.orderNumber}`))
+        const res = await api(`/api/orders/track/${order.orderNumber}`)
         if (res.ok) {
           const fresh = await res.json()
           setOrder(fresh)
@@ -113,7 +113,7 @@ export default function TrackOrderModal({ isOpen, onClose }) {
     setLoading(true)
     const formatted = formatOrderNumber(orderNumber)
     try {
-      const res = await fetch(api(`/api/orders/track/${formatted}`))
+      const res = await api(`/api/orders/track/${formatted}`)
       if (res.status === 404) {
         setError(`No order found with number ${formatted}. Double-check it.`)
         setLoading(false)
@@ -134,7 +134,7 @@ export default function TrackOrderModal({ isOpen, onClose }) {
     if (!order) return
     setLoading(true)
     try {
-      const res = await fetch(api(`/api/orders/track/${order.orderNumber}`))
+      const res = await api(`/api/orders/track/${order.orderNumber}`)
       if (res.ok) {
         const data = await res.json()
         setOrder(data)

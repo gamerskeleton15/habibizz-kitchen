@@ -27,7 +27,7 @@ export default function SupportColumn() {
 
     const fetchThreads = async () => {
       try {
-        const res = await fetch(api('/api/support/threads'), {
+        const res = await api('/api/support/threads', {
           headers: { 'x-admin-token': token },
         })
         if (!res.ok) throw new Error('Failed to load support threads')

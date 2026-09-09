@@ -84,7 +84,7 @@ export default function OrdersPage({ onReorder }) {
 
     const fetchOne = async (id) => {
       try {
-        const res = await fetch(api(`/api/orders/${id}`))
+        const res = await api(`/api/orders/${id}`)
         if (res.status === 404) return { id, missing: true }
         if (!res.ok) return null
         return await res.json()

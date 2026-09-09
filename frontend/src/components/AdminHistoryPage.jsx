@@ -47,7 +47,7 @@ export default function AdminHistoryPage() {
   // Fetch the list of days that have orders.
   const fetchDates = async () => {
     try {
-      const res = await fetch(api('/api/orders/history/dates'), {
+      const res = await api('/api/orders/history/dates', {
         headers: { 'x-admin-token': token },
       })
       if (res.status === 401) {
@@ -74,7 +74,7 @@ export default function AdminHistoryPage() {
     setSelectedDate(date)
     setLoadingDay(true)
     try {
-      const res = await fetch(api(`/api/orders/history/${date}`), {
+      const res = await api(`/api/orders/history/${date}`, {
         headers: { 'x-admin-token': token },
       })
       if (res.status === 401) {
@@ -94,7 +94,7 @@ export default function AdminHistoryPage() {
   // send the x-admin-token header), build a Blob, and trigger the download.
   const downloadDay = async (date) => {
     try {
-      const res = await fetch(api(`/api/orders/history/${date}/export`), {
+      const res = await api(`/api/orders/history/${date}/export`, {
         headers: { 'x-admin-token': token },
       })
       if (res.status === 401) {

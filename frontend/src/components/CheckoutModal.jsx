@@ -80,7 +80,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, onOrderCompl
     }))
 
     try {
-      const response = await fetch(api('/api/orders'), {
+      const response = await api('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

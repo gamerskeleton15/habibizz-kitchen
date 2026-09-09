@@ -17,7 +17,7 @@ export default function MenuPage({ onAddToCart }) {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const response = await fetch(api('/api/menu'))
+        const response = await api('/api/menu')
         if (!response.ok) throw new Error('Failed to load menu')
         const data = await response.json()
         setMenuItems(data)

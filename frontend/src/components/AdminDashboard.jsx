@@ -101,7 +101,7 @@ export default function AdminDashboard() {
 
     const fetchOrders = async () => {
       try {
-        const res = await fetch(api('/api/orders'), {
+        const res = await api('/api/orders', {
           headers: { 'x-admin-token': token },
         })
         // If the server says we're not authorized, kick back to the login screen
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
 
     const fetchSupport = async () => {
       try {
-        const res = await fetch(api('/api/support/threads'), {
+        const res = await api('/api/support/threads', {
           headers: { 'x-admin-token': token },
         })
         if (res.status === 401) {
@@ -205,7 +205,7 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     try {
       if (token) {
-        await fetch(api('/api/admin/logout'), {
+        await api('/api/admin/logout', {
           method: 'POST',
           headers: { 'x-admin-token': token },
         })
@@ -231,7 +231,7 @@ export default function AdminDashboard() {
   // Update an order's status (move to next column)
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      const res = await fetch(api(`/api/orders/${orderId}/status`), {
+      const res = await api(`/api/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

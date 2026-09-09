@@ -13,7 +13,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../apiClient'
+import api, { apiUrl } from '../apiClient'
 
 const AuthContext = createContext({
   user: null,
@@ -49,11 +49,8 @@ export function AuthProvider({ children }) {
   // an OAuth redirect so the UI updates without a full page reload.
   const refresh = useCallback(async () => {
     try {
-      // credentials: 'include' is required so the session cookie is sent
-      // to the backend. Without it, /auth/me always returns { user: null }.
-      const res = await fetch(api('/auth/me'), {
-        credentials: 'include',
-      })
+      // The apiClient now automatically includes credentials: 'include'
+      const res = await api('/auth/me')
       if (!res.ok) {
         setUser(null)
         return
@@ -91,16 +88,15 @@ export function AuthProvider({ children }) {
   // a session cookie set. We do a full navigation (not fetch) because
   // we need the browser to follow the cross-origin redirects.
   const loginWith = useCallback((provider) => {
-    window.location.href = api(`/auth/${provider}`)
+    window.location.href = apiUrl(`/auth/${provider}`)
   }, [])
 
   // Clear the session on the backend, then drop local state. The backend
   // also destroys the session cookie so the next /auth/me returns null.
   const logout = useCallback(async () => {
     try {
-      await fetch(api('/auth/logout'), {
+      await api('/auth/logout', {
         method: 'POST',
-        credentials: 'include',
       })
     } catch (err) {
       console.error('Failed to log out:', err)
